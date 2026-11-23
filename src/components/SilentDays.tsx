@@ -4,15 +4,12 @@ import { useEffect, useState } from "react";
 import { daysSinceTouch } from "@/lib/statusTransitions";
 
 export function SilentDays({ lastTouchAt }: { lastTouchAt: string }) {
-  const [days, setDays] = useState<number | null>(null);
+  const [label, setLabel] = useState("Без касания: …");
 
   useEffect(() => {
-    setDays(daysSinceTouch(lastTouchAt, Date.now()));
+    const days = daysSinceTouch(lastTouchAt, Date.now());
+    setLabel(`Без касания: ${days} дн.`);
   }, [lastTouchAt]);
 
-  return (
-    <p className="mt-1 text-xs text-zinc-400">
-      Без касания: {days === null ? "…" : `${days} дн.`}
-    </p>
-  );
+  return <div className="mt-1 text-xs text-zinc-400">{label}</div>;
 }

@@ -13,34 +13,46 @@ import { NoteTime } from "@/components/NoteTime";
 
 class SoftErrorBoundary extends Component<
   { children: React.ReactNode },
-  { error: Error | null }
+  { error: Error | null; resetKey: number }
 > {
-  state: { error: Error | null } = { error: null };
+  state: { error: Error | null; resetKey: number } = {
+    error: null,
+    resetKey: 0,
+  };
 
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
 
+  componentDidCatch(error: Error) {
+    // DOM reconciliation glitches (often <select>) — auto-recover by remount
+    if (error.message.includes("removeChild")) {
+      window.setTimeout(() => {
+        this.setState((s) => ({ error: null, resetKey: s.resetKey + 1 }));
+      }, 0);
+    }
+  }
+
   render() {
-    if (this.state.error) {
+    if (this.state.error && !this.state.error.message.includes("removeChild")) {
       return (
         <main className="mx-auto max-w-2xl px-4 py-8">
           <Link href="/" className="text-sm text-zinc-500 hover:underline">
             ← К воронке
           </Link>
           <h1 className="mt-4 text-xl font-semibold">Ошибка на карточке</h1>
-          <p className="mt-2 text-sm text-zinc-500">{this.state.error.message}</p>
+          <div className="mt-2 text-sm text-zinc-500">{this.state.error.message}</div>
           <button
             type="button"
             className="mt-4 rounded-lg border px-3 py-1.5 text-sm"
-            onClick={() => this.setState({ error: null })}
+            onClick={() => this.setState({ error: null, resetKey: this.state.resetKey + 1 })}
           >
             Попробовать снова
           </button>
         </main>
       );
     }
-    return this.props.children;
+    return <div key={this.state.resetKey}>{this.props.children}</div>;
   }
 }
 
@@ -97,9 +109,9 @@ function LeadBody() {
       <h1 className="mt-4 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
         {lead.name}
       </h1>
-      <p className="text-sm text-zinc-500">
+      <div className="text-sm text-zinc-500">
         {lead.contact} · {lead.source} · owner: {ownerName(lead.ownerId)}
-      </p>
+      </div>
       <SilentDays lastTouchAt={lead.lastTouchAt} />
 
       <div className="mt-6 space-y-4">
