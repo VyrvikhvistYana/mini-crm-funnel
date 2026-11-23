@@ -4,8 +4,6 @@ import { cookies } from "next/headers";
 import { getSession, SESSION_COOKIE } from "@/lib/auth";
 import { HomeClient } from "@/components/HomeClient";
 
-export const instant = false;
-
 async function logout() {
   "use server";
   const jar = await cookies();
