@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { AiSuggestion } from "@/lib/types";
+import type { AiSuggestion, Lead } from "@/lib/types";
+import { useLeads } from "@/components/LeadsProvider";
 
-export function SuggestPanel({ leadId }: { leadId: string }) {
+export function SuggestPanel({ lead }: { lead: Lead }) {
+  const { addNote, addSuggestion } = useLeads();
   const [suggestion, setSuggestion] = useState<AiSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,10 +15,15 @@ export function SuggestPanel({ leadId }: { leadId: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/leads/${leadId}/suggest`, { method: "POST" });
+      const res = await fetch(`/api/leads/${lead.id}/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
       setSuggestion(data.suggestion);
+      addSuggestion(data.suggestion);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -31,16 +38,12 @@ export function SuggestPanel({ leadId }: { leadId: string }) {
     setTimeout(() => setCopied(false), 1500);
   }
 
-  async function saveToNotes() {
+  function saveToNotes() {
     if (!suggestion) return;
-    await fetch(`/api/leads/${leadId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        note: `[AI] ${suggestion.nextAction}: ${suggestion.draftMessage}`,
-      }),
-    });
-    window.location.reload();
+    addNote(
+      lead.id,
+      `[AI] ${suggestion.nextAction}: ${suggestion.draftMessage}`,
+    );
   }
 
   return (

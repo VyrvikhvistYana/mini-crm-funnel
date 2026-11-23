@@ -3,17 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LeadSource } from "@/lib/types";
+import { useLeads } from "@/components/LeadsProvider";
 
 const SOURCES: LeadSource[] = ["website", "referral", "cold", "event", "other"];
 
 export function NewLeadForm() {
   const router = useRouter();
+  const { createLead } = useLeads();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [source, setSource] = useState<LeadSource>("website");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<{ id: string; name: string } | null>(
     null,
   );
@@ -24,33 +24,14 @@ export function NewLeadForm() {
     return () => window.clearTimeout(t);
   }, [created]);
 
-  async function submit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, contact, source }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Не удалось создать лид");
-        return;
-      }
-      const leadName = name;
-      setName("");
-      setContact("");
-      setSource("website");
-      setOpen(false);
-      setCreated({ id: data.lead.id, name: leadName });
-      router.refresh();
-    } catch {
-      setError("Сеть: не удалось создать лид");
-    } finally {
-      setBusy(false);
-    }
+    const lead = createLead({ name, contact, source });
+    setName("");
+    setContact("");
+    setSource("website");
+    setOpen(false);
+    setCreated({ id: lead.id, name: lead.name });
   }
 
   return (
@@ -58,10 +39,7 @@ export function NewLeadForm() {
       {!open ? (
         <button
           type="button"
-          onClick={() => {
-            setOpen(true);
-            setError(null);
-          }}
+          onClick={() => setOpen(true)}
           className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
         >
           + Новый лид
@@ -106,13 +84,11 @@ export function NewLeadForm() {
               </option>
             ))}
           </select>
-          {error && <p className="text-xs text-red-600">{error}</p>}
           <button
             type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-zinc-900 py-1.5 text-sm text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+            className="w-full rounded-lg bg-zinc-900 py-1.5 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900"
           >
-            {busy ? "Создаю…" : "Создать"}
+            Создать
           </button>
         </form>
       )}
@@ -131,7 +107,7 @@ export function NewLeadForm() {
           <div className="min-w-0">
             <p className="font-medium">Создано</p>
             <p className="truncate text-xs text-emerald-800/80 dark:text-emerald-200/80">
-              «{created.name}» в колонке New — можно оставаться на доске
+              «{created.name}» уже на доске в колонке New
             </p>
             <button
               type="button"

@@ -9,6 +9,7 @@ import {
   canTransition,
   daysSinceTouch,
 } from "@/lib/statusTransitions";
+import { useLeads } from "@/components/LeadsProvider";
 
 const LABELS: Record<LeadStatus, string> = {
   new: "New",
@@ -21,27 +22,20 @@ const LABELS: Record<LeadStatus, string> = {
 
 type DragPayload = { id: string; from: LeadStatus };
 
-export function LeadBoard({
-  leads: initialLeads,
-  nowMs,
-}: {
-  leads: Lead[];
-  nowMs: number;
-}) {
+export function LeadBoard({ leads }: { leads: Lead[] }) {
   const router = useRouter();
-  const [leads, setLeads] = useState(initialLeads);
-  const leadsSig = initialLeads.map((l) => `${l.id}:${l.status}`).join("|");
-  useEffect(() => {
-    setLeads(initialLeads);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync only when ids/statuses change from server
-  }, [leadsSig]);
+  const { updateLeadStatus } = useLeads();
+  const [nowMs, setNowMs] = useState<number | null>(null);
   const [dragging, setDragging] = useState<DragPayload | null>(null);
   const [overStatus, setOverStatus] = useState<LeadStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const didDrag = useRef(false);
 
-  async function moveLead(leadId: string, to: LeadStatus) {
+  useEffect(() => {
+    setNowMs(Date.now());
+  }, []);
+
+  function moveLead(leadId: string, to: LeadStatus) {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead || lead.status === to) return;
 
@@ -56,31 +50,8 @@ export function LeadBoard({
     }
 
     setError(null);
-    const prev = leads;
-    setLeads((list) =>
-      list.map((l) => (l.id === leadId ? { ...l, status: to } : l)),
-    );
-    setBusyId(leadId);
-
-    try {
-      const res = await fetch(`/api/leads/${leadId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: to }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setLeads(prev);
-        setError(data.error ?? "Не удалось сменить статус");
-        return;
-      }
-      router.refresh();
-    } catch {
-      setLeads(prev);
-      setError("Сеть: не удалось сменить статус");
-    } finally {
-      setBusyId(null);
-    }
+    const result = updateLeadStatus(leadId, to);
+    if (!result.ok) setError(result.error);
   }
 
   return (
@@ -130,7 +101,7 @@ export function LeadBoard({
                 if (!raw) return;
                 try {
                   const payload = JSON.parse(raw) as DragPayload;
-                  void moveLead(payload.id, status);
+                  moveLead(payload.id, status);
                 } catch {
                   /* ignore */
                 }
@@ -153,11 +124,12 @@ export function LeadBoard({
               </header>
               <ul className="flex min-h-[80px] flex-col gap-2">
                 {column.map((lead) => {
-                  const silent = daysSinceTouch(lead.lastTouchAt, nowMs);
+                  const silent =
+                    nowMs === null ? 0 : daysSinceTouch(lead.lastTouchAt, nowMs);
                   return (
                     <li key={lead.id}>
                       <div
-                        draggable={busyId !== lead.id}
+                        draggable
                         onDragStart={(e) => {
                           didDrag.current = true;
                           const payload: DragPayload = {
@@ -190,7 +162,6 @@ export function LeadBoard({
                         className={[
                           "cursor-grab rounded-lg border border-zinc-200 bg-white p-3 text-sm shadow-sm transition active:cursor-grabbing",
                           "hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-950",
-                          busyId === lead.id ? "opacity-50" : "",
                           dragging?.id === lead.id ? "opacity-40" : "",
                         ].join(" ")}
                       >
@@ -203,7 +174,7 @@ export function LeadBoard({
                         <div className="mt-2 flex justify-between text-[11px] text-zinc-400">
                           <span>{lead.source}</span>
                           <span className={silent >= 7 ? "text-amber-600" : ""}>
-                            {silent}d silent
+                            {nowMs === null ? "…" : `${silent}d silent`}
                           </span>
                         </div>
                       </div>
