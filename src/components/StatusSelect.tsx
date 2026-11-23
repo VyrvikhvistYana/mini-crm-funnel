@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LeadStatus } from "@/lib/types";
-import { ALLOWED_TRANSITIONS, PIPELINE_STATUSES } from "@/lib/statusTransitions";
+import { ALLOWED_TRANSITIONS } from "@/lib/statusTransitions";
 import { useLeads } from "@/components/LeadsProvider";
+import { SaveToast } from "@/components/SaveToast";
 
 export function StatusSelect({
   leadId,
@@ -14,17 +15,27 @@ export function StatusSelect({
 }) {
   const { updateLeadStatus } = useLeads();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const allowed = ALLOWED_TRANSITIONS[status];
+
+  useEffect(() => {
+    if (!saved) return;
+    const t = window.setTimeout(() => setSaved(false), 3000);
+    return () => window.clearTimeout(t);
+  }, [saved]);
 
   function onChange(next: LeadStatus) {
     if (next === status) return;
     setError(null);
+    setSaved(false);
     const result = updateLeadStatus(leadId, next);
-    if (!result.ok) setError(result.error);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setSaved(true);
   }
 
-  // key={status} remounts <select> on change — avoids browser removeChild bugs
-  // when option disabled flags flip during reconciliation.
   return (
     <div translate="no">
       <div className="text-xs font-medium text-zinc-500">Status</div>
@@ -42,6 +53,9 @@ export function StatusSelect({
         ))}
       </select>
       {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
+      {saved && (
+        <SaveToast message="Статус сохранён" onClose={() => setSaved(false)} />
+      )}
     </div>
   );
 }

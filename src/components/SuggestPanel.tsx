@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AiSuggestion, Lead } from "@/lib/types";
 import { useLeads } from "@/components/LeadsProvider";
+import { SaveToast } from "@/components/SaveToast";
 
 export function SuggestPanel({ lead }: { lead: Lead }) {
   const { addNote, addSuggestion } = useLeads();
@@ -10,6 +11,7 @@ export function SuggestPanel({ lead }: { lead: Lead }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
 
   async function ask() {
     setLoading(true);
@@ -40,10 +42,14 @@ export function SuggestPanel({ lead }: { lead: Lead }) {
 
   function saveToNotes() {
     if (!suggestion) return;
-    addNote(
+    const result = addNote(
       lead.id,
       `[AI] ${suggestion.nextAction}: ${suggestion.draftMessage}`,
     );
+    if (result.ok) {
+      setNoteSaved(true);
+      window.setTimeout(() => setNoteSaved(false), 3000);
+    }
   }
 
   return (
@@ -102,6 +108,7 @@ export function SuggestPanel({ lead }: { lead: Lead }) {
               Сохранить в заметки
             </button>
           </div>
+          {noteSaved && <SaveToast message="Черновик сохранён в заметки" />}
         </div>
       )}
     </div>
