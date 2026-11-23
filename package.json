@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval": "tsx eval/run.ts"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -21,6 +22,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5"
-  }
+  },
+  "description": "Mini CRM funnel MVP: roles, status transitions, AI next-best-action"
 }

@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mini CRM Funnel
 
-## Getting Started
+Портфолио-MVP: **воронка лидов + роли + AI-подсказка следующего шага**.
 
-First, run the development server:
+Не «чат ради чата», а простой бизнес-процесс: менеджер ведёт лиды по статусам, нейросеть предлагает **что сделать дальше** и черновик сообщения.
+
+## Проблема
+
+Менеджеры теряют лиды: забывают follow-up, прыгают по статусам без правил, тратят время на текст касания с нуля.
+
+## Что умеет демо
+
+- Роли: **admin** видит всех, **manager** — только своих
+- Воронка со **строгими переходами**: `new → contacted → qualified → proposal → won/lost` (нельзя `new → won`)
+- Канбан с **drag-and-drop** (запрещённый переход не применится)
+- Создание лида, заметки, «дней без касания»
+- Кнопка **«Что делать дальше?»**:
+  - есть `GEMINI_API_KEY` → ответ Gemini
+  - нет ключа / API недоступен → запасная эвристика
+- Offline-проверка эвристики: `npm run eval` (10 эталонных кейсов)
+
+## Быстрый старт
 
 ```bash
+git clone https://github.com/VyrvikhvistYana/mini-crm-funnel.git
+cd mini-crm-funnel
+npm install
+cp .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Открой http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Демо-пользователи
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Роль | Email | Password |
+|------|-------|----------|
+| Admin | `admin@demo.local` | `admin` |
+| Manager | `manager@demo.local` | `manager` |
+| Manager 2 | `manager2@demo.local` | `manager` |
 
-## Learn More
+### Ключ Gemini (опционально)
 
-To learn more about Next.js, take a look at the following resources:
+1. Создай ключ: https://aistudio.google.com/apikey  
+2. В `.env`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+GEMINI_API_KEY=ваш_ключ
+GEMINI_MODEL=gemini-3.6-flash
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Без ключа демо всё равно работает (эвристика). **Не коммитьте `.env`.**
 
-## Deploy on Vercel
+На Vercel добавьте те же переменные в Project → Settings → Environment Variables.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Как устроено
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/app/          страницы и API
+src/components/   доска, формы, AI-панель
+src/data/         seed (15 лидов) + хранилище в памяти
+src/lib/          типы, права, переходы статусов, AI
+eval/             эталоны для проверки эвристики
+```
+
+Стек: Next.js (App Router) + TypeScript + Tailwind. Данные пока в памяти процесса (после рестарта сервера seed заново) — так проще для MVP.
+
+## Что это демонстрирует на собесе
+
+> Собрала MVP CRM-воронки: роли, статусы с правилами переходов, AI предлагает next best action и черновик касания; есть fallback без ключа и простой eval на качество эвристики.
+
+## Ограничения MVP
+
+- Нет настоящей БД и регистрации «как в проде»
+- Нет отправки писем из продукта
+- Нет мультитенантности и интеграций с Bitrix/amocrm
+
+## Дальше (идеи)
+
+- Postgres вместо памяти
+- Нормальный auth (Clerk / NextAuth)
+- Tool calling у агента
+- Деплой + короткий скринкаст
+
+## Лицензия
+
+Учебный / портфолио-проект.

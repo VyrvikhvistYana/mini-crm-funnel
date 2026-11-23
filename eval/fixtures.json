@@ -1,0 +1,52 @@
+[
+  {
+    "leadId": "l-1",
+    "expectNextAction": "first_contact",
+    "why": "status=new"
+  },
+  {
+    "leadId": "l-2",
+    "expectNextAction": "follow_up",
+    "why": "7+ days silent"
+  },
+  {
+    "leadId": "l-8",
+    "expectNextAction": "follow_up",
+    "why": "11 days silent"
+  },
+  {
+    "leadId": "l-12",
+    "expectNextAction": "follow_up",
+    "why": "15 days silent"
+  },
+  {
+    "leadId": "l-3",
+    "expectNextAction": "qualify_needs",
+    "why": "qualified, recent touch"
+  },
+  {
+    "leadId": "l-4",
+    "expectNextAction": "close_or_nudge",
+    "why": "proposal stage"
+  },
+  {
+    "leadId": "l-10",
+    "expectNextAction": "follow_up",
+    "why": "proposal but 8 days silent wins"
+  },
+  {
+    "leadId": "l-11",
+    "expectNextAction": "first_contact",
+    "why": "fresh new"
+  },
+  {
+    "leadId": "l-13",
+    "expectNextAction": "qualify_needs",
+    "why": "contacted, recent"
+  },
+  {
+    "leadId": "l-14",
+    "expectNextAction": "close_or_nudge",
+    "why": "proposal, recent"
+  }
+]
