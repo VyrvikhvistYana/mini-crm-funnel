@@ -4,13 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LeadSource } from "@/lib/types";
 import { useLeads } from "@/components/LeadsProvider";
-import { markLeadForHighlight } from "@/lib/highlightLead";
 
 const SOURCES: LeadSource[] = ["website", "referral", "cold", "event", "other"];
 
 export function NewLeadForm() {
   const router = useRouter();
-  const { createLead } = useLeads();
+  const { createLead, flashLead } = useLeads();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -28,14 +27,12 @@ export function NewLeadForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const lead = createLead({ name, contact, source });
-    markLeadForHighlight(lead.id);
+    flashLead(lead.id);
     setName("");
     setContact("");
     setSource("website");
     setOpen(false);
     setCreated({ id: lead.id, name: lead.name });
-    // trigger highlight on same page (board already mounted)
-    window.dispatchEvent(new Event("crm-highlight-lead"));
   }
 
   return (

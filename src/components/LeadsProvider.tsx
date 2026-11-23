@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type {
@@ -24,6 +25,7 @@ import {
   saveSuggestions,
 } from "@/lib/clientLeadsStorage";
 import { SEED_USERS } from "@/data/seed";
+import { markLeadForHighlight } from "@/lib/highlightLead";
 
 type LeadsContextValue = {
   session: SessionUser;
@@ -42,6 +44,8 @@ type LeadsContextValue = {
   suggestionsFor: (leadId: string) => AiSuggestion[];
   addSuggestion: (s: AiSuggestion) => void;
   canEdit: (lead: Lead) => boolean;
+  highlightId: string | null;
+  flashLead: (leadId: string) => void;
 };
 
 const LeadsContext = createContext<LeadsContextValue | null>(null);
@@ -56,6 +60,8 @@ export function LeadsProvider({
   const [ready, setReady] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [suggestions, setSuggestions] = useState<AiSuggestion[]>([]);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const highlightTimer = useRef<number | null>(null);
 
   useEffect(() => {
     setLeads(loadLeads());
@@ -72,6 +78,21 @@ export function LeadsProvider({
     if (!ready) return;
     saveSuggestions(suggestions);
   }, [suggestions, ready]);
+
+  const flashLead = useCallback((leadId: string) => {
+    markLeadForHighlight(leadId);
+    setHighlightId(leadId);
+    if (highlightTimer.current) window.clearTimeout(highlightTimer.current);
+    highlightTimer.current = window.setTimeout(() => {
+      setHighlightId((current) => (current === leadId ? null : current));
+    }, 3200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimer.current) window.clearTimeout(highlightTimer.current);
+    };
+  }, []);
 
   const visibleLeads = useMemo(() => {
     if (canListAllLeads(session)) return leads;
@@ -208,6 +229,8 @@ export function LeadsProvider({
       suggestionsFor,
       addSuggestion: addSuggestionLocal,
       canEdit: (lead) => canEditLead(session, lead),
+      highlightId,
+      flashLead,
     }),
     [
       session,
@@ -221,6 +244,8 @@ export function LeadsProvider({
       ownerName,
       suggestionsFor,
       addSuggestionLocal,
+      highlightId,
+      flashLead,
     ],
   );
 

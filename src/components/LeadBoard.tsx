@@ -25,12 +25,11 @@ type DragPayload = { id: string; from: LeadStatus };
 
 export function LeadBoard({ leads }: { leads: Lead[] }) {
   const router = useRouter();
-  const { updateLeadStatus } = useLeads();
+  const { updateLeadStatus, highlightId, flashLead } = useLeads();
   const [nowMs, setNowMs] = useState<number | null>(null);
   const [dragging, setDragging] = useState<DragPayload | null>(null);
   const [overStatus, setOverStatus] = useState<LeadStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
   const didDrag = useRef(false);
 
   useEffect(() => {
@@ -38,33 +37,18 @@ export function LeadBoard({ leads }: { leads: Lead[] }) {
   }, []);
 
   useEffect(() => {
-    let clearTimer: number | undefined;
-    let scrollTimer: number | undefined;
+    const id = consumeHighlightedLeadId();
+    if (id) flashLead(id);
+  }, [flashLead]);
 
-    function applyHighlight(id: string) {
-      setHighlightId(id);
-      window.clearTimeout(scrollTimer);
-      window.clearTimeout(clearTimer);
-      scrollTimer = window.setTimeout(() => {
-        const el = document.querySelector(`[data-testid="lead-card-${id}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      }, 50);
-      clearTimer = window.setTimeout(() => setHighlightId(null), 3200);
-    }
-
-    function fromStorage() {
-      const id = consumeHighlightedLeadId();
-      if (id) applyHighlight(id);
-    }
-
-    fromStorage();
-    window.addEventListener("crm-highlight-lead", fromStorage);
-    return () => {
-      window.removeEventListener("crm-highlight-lead", fromStorage);
-      window.clearTimeout(scrollTimer);
-      window.clearTimeout(clearTimer);
-    };
-  }, []);
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = window.setTimeout(() => {
+      const el = document.querySelector(`[data-testid="lead-card-${highlightId}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [highlightId, leads]);
 
   function moveLead(leadId: string, to: LeadStatus) {
     const lead = leads.find((l) => l.id === leadId);
