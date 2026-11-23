@@ -59,6 +59,7 @@ export function SuggestPanel({ lead }: { lead: Lead }) {
           AI: что делать дальше?
         </h2>
         <button
+          data-testid="ai-ask"
           type="button"
           onClick={ask}
           disabled={loading}

@@ -24,3 +24,37 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes lead-card-blink {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    border-color: rgb(245, 158, 11);
+    background-color: rgb(255, 251, 235);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.45);
+    border-color: rgb(217, 119, 6);
+    background-color: rgb(254, 243, 199);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  @keyframes lead-card-blink {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+      border-color: rgb(245, 158, 11);
+      background-color: rgb(69, 26, 3);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.35);
+      border-color: rgb(252, 211, 77);
+      background-color: rgb(120, 53, 15);
+    }
+  }
+}
+
+.lead-card-highlight {
+  animation: lead-card-blink 0.7s ease-in-out 4;
+}

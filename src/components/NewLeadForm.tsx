@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { LeadSource } from "@/lib/types";
 import { useLeads } from "@/components/LeadsProvider";
+import { markLeadForHighlight } from "@/lib/highlightLead";
 
 const SOURCES: LeadSource[] = ["website", "referral", "cold", "event", "other"];
 
@@ -27,17 +28,21 @@ export function NewLeadForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const lead = createLead({ name, contact, source });
+    markLeadForHighlight(lead.id);
     setName("");
     setContact("");
     setSource("website");
     setOpen(false);
     setCreated({ id: lead.id, name: lead.name });
+    // trigger highlight on same page (board already mounted)
+    window.dispatchEvent(new Event("crm-highlight-lead"));
   }
 
   return (
     <div className="flex flex-col items-end gap-2">
       {!open ? (
         <button
+          data-testid="new-lead-button"
           type="button"
           onClick={() => setOpen(true)}
           className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
@@ -46,6 +51,7 @@ export function NewLeadForm() {
         </button>
       ) : (
         <form
+          data-testid="new-lead-form"
           onSubmit={submit}
           className="w-full max-w-md space-y-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:w-80"
         >
@@ -61,6 +67,7 @@ export function NewLeadForm() {
           </div>
           <input
             required
+            data-testid="new-lead-name"
             placeholder="Название / компания"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -68,6 +75,7 @@ export function NewLeadForm() {
           />
           <input
             required
+            data-testid="new-lead-contact"
             placeholder="Контакт (email / телефон)"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
@@ -95,6 +103,7 @@ export function NewLeadForm() {
 
       {created && (
         <div
+          data-testid="new-lead-success"
           role="status"
           className="flex max-w-sm items-start gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
         >

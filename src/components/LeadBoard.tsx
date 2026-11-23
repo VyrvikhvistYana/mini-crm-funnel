@@ -10,6 +10,7 @@ import {
   daysSinceTouch,
 } from "@/lib/statusTransitions";
 import { useLeads } from "@/components/LeadsProvider";
+import { consumeHighlightedLeadId } from "@/lib/highlightLead";
 
 const LABELS: Record<LeadStatus, string> = {
   new: "New",
@@ -29,10 +30,40 @@ export function LeadBoard({ leads }: { leads: Lead[] }) {
   const [dragging, setDragging] = useState<DragPayload | null>(null);
   const [overStatus, setOverStatus] = useState<LeadStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const didDrag = useRef(false);
 
   useEffect(() => {
     setNowMs(Date.now());
+  }, []);
+
+  useEffect(() => {
+    let clearTimer: number | undefined;
+    let scrollTimer: number | undefined;
+
+    function applyHighlight(id: string) {
+      setHighlightId(id);
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearTimer);
+      scrollTimer = window.setTimeout(() => {
+        const el = document.querySelector(`[data-testid="lead-card-${id}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }, 50);
+      clearTimer = window.setTimeout(() => setHighlightId(null), 3200);
+    }
+
+    function fromStorage() {
+      const id = consumeHighlightedLeadId();
+      if (id) applyHighlight(id);
+    }
+
+    fromStorage();
+    window.addEventListener("crm-highlight-lead", fromStorage);
+    return () => {
+      window.removeEventListener("crm-highlight-lead", fromStorage);
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearTimer);
+    };
   }, []);
 
   function moveLead(leadId: string, to: LeadStatus) {
@@ -107,6 +138,7 @@ export function LeadBoard({ leads }: { leads: Lead[] }) {
                 }
                 setDragging(null);
               }}
+              data-testid={`column-${status}`}
               className={[
                 "min-w-[180px] rounded-xl border p-2 transition",
                 highlighted && dropOk
@@ -159,10 +191,13 @@ export function LeadBoard({ leads }: { leads: Lead[] }) {
                           if (didDrag.current) return;
                           router.push(`/leads/${lead.id}`);
                         }}
+                        data-testid={`lead-card-${lead.id}`}
+                        data-lead-name={lead.name}
                         className={[
                           "cursor-grab rounded-lg border border-zinc-200 bg-white p-3 text-sm shadow-sm transition active:cursor-grabbing",
                           "hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-950",
                           dragging?.id === lead.id ? "opacity-40" : "",
+                          highlightId === lead.id ? "lead-card-highlight" : "",
                         ].join(" ")}
                       >
                         <div className="font-medium text-zinc-900 dark:text-zinc-100">

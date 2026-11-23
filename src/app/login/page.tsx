@@ -40,10 +40,11 @@ export default function LoginPage() {
       <p className="mt-1 text-sm text-zinc-500">
         Демо-логин (cookie session, без реального IdP).
       </p>
-      <form onSubmit={submit} className="mt-6 space-y-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <form data-testid="login-form" onSubmit={submit} className="mt-6 space-y-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <label className="block text-sm">
           Email
           <input
+            data-testid="login-email"
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -52,6 +53,7 @@ export default function LoginPage() {
         <label className="block text-sm">
           Password
           <input
+            data-testid="login-password"
             type="password"
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
             value={password}
@@ -60,6 +62,7 @@ export default function LoginPage() {
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
+          data-testid="login-submit"
           type="submit"
           className="w-full rounded-lg bg-zinc-900 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
         >

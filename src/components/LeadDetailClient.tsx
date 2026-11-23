@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Component, useMemo } from "react";
+import { Component, useEffect, useMemo } from "react";
 import type { SessionUser } from "@/lib/types";
 import { LeadsProvider, useLeads } from "@/components/LeadsProvider";
 import { SuggestPanel } from "@/components/SuggestPanel";
@@ -10,6 +10,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 import { AddNoteForm } from "@/components/AddNoteForm";
 import { SilentDays } from "@/components/SilentDays";
 import { NoteTime } from "@/components/NoteTime";
+import { markLeadForHighlight } from "@/lib/highlightLead";
 
 class SoftErrorBoundary extends Component<
   { children: React.ReactNode },
@@ -65,6 +66,10 @@ function LeadBody() {
 
   const { ready, getLead, ownerName, suggestionsFor, canEdit } = useLeads();
 
+  useEffect(() => {
+    if (id) markLeadForHighlight(id);
+  }, [id]);
+
   if (!ready) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-8 text-sm text-zinc-500">
@@ -103,7 +108,11 @@ function LeadBody() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <Link href="/" className="text-sm text-zinc-500 hover:underline">
+      <Link
+        href="/"
+        className="text-sm text-zinc-500 hover:underline"
+        onClick={() => markLeadForHighlight(lead.id)}
+      >
         ← К воронке
       </Link>
       <h1 className="mt-4 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">

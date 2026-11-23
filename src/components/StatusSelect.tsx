@@ -41,6 +41,7 @@ export function StatusSelect({
       <div className="text-xs font-medium text-zinc-500">Status</div>
       <select
         key={`${leadId}-${status}`}
+        data-testid="status-select"
         className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         defaultValue={status}
         onChange={(e) => onChange(e.target.value as LeadStatus)}
