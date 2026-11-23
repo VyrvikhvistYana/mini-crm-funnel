@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Component, useMemo } from "react";
 import type { SessionUser } from "@/lib/types";
 import { LeadsProvider, useLeads } from "@/components/LeadsProvider";
 import { SuggestPanel } from "@/components/SuggestPanel";
@@ -10,15 +11,63 @@ import { AddNoteForm } from "@/components/AddNoteForm";
 import { SilentDays } from "@/components/SilentDays";
 import { NoteTime } from "@/components/NoteTime";
 
+class SoftErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="mx-auto max-w-2xl px-4 py-8">
+          <Link href="/" className="text-sm text-zinc-500 hover:underline">
+            ← К воронке
+          </Link>
+          <h1 className="mt-4 text-xl font-semibold">Ошибка на карточке</h1>
+          <p className="mt-2 text-sm text-zinc-500">{this.state.error.message}</p>
+          <button
+            type="button"
+            className="mt-4 rounded-lg border px-3 py-1.5 text-sm"
+            onClick={() => this.setState({ error: null })}
+          >
+            Попробовать снова
+          </button>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function LeadBody() {
-  const params = useParams<{ id: string }>();
-  const id = params.id;
+  const params = useParams();
+  const id = useMemo(() => {
+    const raw = params?.id;
+    return Array.isArray(raw) ? raw[0] : raw;
+  }, [params]);
+
   const { ready, getLead, ownerName, suggestionsFor, canEdit } = useLeads();
 
   if (!ready) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-8 text-sm text-zinc-500">
         Загрузка…
+      </main>
+    );
+  }
+
+  if (!id) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <Link href="/" className="text-sm text-zinc-500 hover:underline">
+          ← К воронке
+        </Link>
+        <h1 className="mt-4 text-xl font-semibold">Нет id карточки</h1>
       </main>
     );
   }
@@ -94,7 +143,9 @@ function LeadBody() {
 export function LeadDetailClient({ session }: { session: SessionUser }) {
   return (
     <LeadsProvider session={session}>
-      <LeadBody />
+      <SoftErrorBoundary>
+        <LeadBody />
+      </SoftErrorBoundary>
     </LeadsProvider>
   );
 }

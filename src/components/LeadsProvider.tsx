@@ -114,16 +114,21 @@ export function LeadsProvider({
 
   const updateLeadStatus = useCallback(
     (id: string, status: LeadStatus) => {
-      const lead = leads.find((l) => l.id === id);
-      if (!lead) return { ok: false as const, error: "Лид не найден" };
-      if (!canEditLead(session, lead)) return { ok: false as const, error: "Нет прав" };
-      if (!canTransition(lead.status, status)) {
-        return {
-          ok: false as const,
-          error: `Переход ${lead.status} → ${status} запрещён`,
-        };
-      }
+      let error: string | null = null;
       setLeads((prev) => {
+        const lead = prev.find((l) => l.id === id);
+        if (!lead) {
+          error = "Лид не найден";
+          return prev;
+        }
+        if (!canEditLead(session, lead)) {
+          error = "Нет прав";
+          return prev;
+        }
+        if (!canTransition(lead.status, status)) {
+          error = `Переход ${lead.status} → ${status} запрещён`;
+          return prev;
+        }
         const next = prev.map((l) =>
           l.id === id
             ? {
@@ -137,9 +142,10 @@ export function LeadsProvider({
         saveLeads(next);
         return next;
       });
+      if (error) return { ok: false as const, error };
       return { ok: true as const };
     },
-    [leads, session],
+    [session],
   );
 
   const addNote = useCallback(
@@ -188,20 +194,35 @@ export function LeadsProvider({
     });
   }, []);
 
-  const value: LeadsContextValue = {
-    session,
-    ready,
-    leads,
-    visibleLeads,
-    getLead,
-    createLead,
-    updateLeadStatus,
-    addNote,
-    ownerName,
-    suggestionsFor,
-    addSuggestion: addSuggestionLocal,
-    canEdit: (lead) => canEditLead(session, lead),
-  };
+  const value = useMemo<LeadsContextValue>(
+    () => ({
+      session,
+      ready,
+      leads,
+      visibleLeads,
+      getLead,
+      createLead,
+      updateLeadStatus,
+      addNote,
+      ownerName,
+      suggestionsFor,
+      addSuggestion: addSuggestionLocal,
+      canEdit: (lead) => canEditLead(session, lead),
+    }),
+    [
+      session,
+      ready,
+      leads,
+      visibleLeads,
+      getLead,
+      createLead,
+      updateLeadStatus,
+      addNote,
+      ownerName,
+      suggestionsFor,
+      addSuggestionLocal,
+    ],
+  );
 
   return <LeadsContext.Provider value={value}>{children}</LeadsContext.Provider>;
 }

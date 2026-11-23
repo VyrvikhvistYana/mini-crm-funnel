@@ -14,10 +14,15 @@ export function loadLeads(): Lead[] {
     const raw = localStorage.getItem(LEADS_KEY);
     if (!raw) {
       const seed = structuredClone(SEED_LEADS);
-      localStorage.setItem(LEADS_KEY, JSON.stringify(seed));
+      try {
+        localStorage.setItem(LEADS_KEY, JSON.stringify(seed));
+      } catch {
+        /* ignore quota */
+      }
       return seed;
     }
-    return JSON.parse(raw) as Lead[];
+    const parsed = JSON.parse(raw) as Lead[];
+    return Array.isArray(parsed) ? parsed : structuredClone(SEED_LEADS);
   } catch {
     return structuredClone(SEED_LEADS);
   }
@@ -25,7 +30,11 @@ export function loadLeads(): Lead[] {
 
 export function saveLeads(leads: Lead[]): void {
   if (!canUseStorage()) return;
-  localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
+  try {
+    localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
+  } catch {
+    /* private mode / quota — do not crash UI */
+  }
 }
 
 export function loadSuggestions(): AiSuggestion[] {
@@ -33,7 +42,8 @@ export function loadSuggestions(): AiSuggestion[] {
   try {
     const raw = localStorage.getItem(SUGGESTIONS_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as AiSuggestion[];
+    const parsed = JSON.parse(raw) as AiSuggestion[];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -41,5 +51,9 @@ export function loadSuggestions(): AiSuggestion[] {
 
 export function saveSuggestions(items: AiSuggestion[]): void {
   if (!canUseStorage()) return;
-  localStorage.setItem(SUGGESTIONS_KEY, JSON.stringify(items));
+  try {
+    localStorage.setItem(SUGGESTIONS_KEY, JSON.stringify(items));
+  } catch {
+    /* ignore */
+  }
 }
