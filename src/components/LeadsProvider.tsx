@@ -40,6 +40,7 @@ type LeadsContextValue = {
   }) => Lead;
   updateLeadStatus: (id: string, status: LeadStatus) => { ok: true } | { ok: false; error: string };
   addNote: (id: string, text: string) => { ok: true } | { ok: false; error: string };
+  deleteLead: (id: string) => { ok: true } | { ok: false; error: string };
   ownerName: (ownerId: string) => string;
   suggestionsFor: (leadId: string) => AiSuggestion[];
   addSuggestion: (s: AiSuggestion) => void;
@@ -198,6 +199,26 @@ export function LeadsProvider({
     [leads, session],
   );
 
+  const deleteLead = useCallback(
+    (id: string) => {
+      const lead = leads.find((l) => l.id === id);
+      if (!lead) return { ok: false as const, error: "Лид не найден" };
+      if (!canEditLead(session, lead)) return { ok: false as const, error: "Нет прав" };
+      setLeads((prev) => {
+        const next = prev.filter((l) => l.id !== id);
+        saveLeads(next);
+        return next;
+      });
+      setSuggestions((prev) => {
+        const next = prev.filter((s) => s.leadId !== id);
+        saveSuggestions(next);
+        return next;
+      });
+      return { ok: true as const };
+    },
+    [leads, session],
+  );
+
   const ownerName = useCallback((ownerId: string) => {
     return SEED_USERS.find((u) => u.id === ownerId)?.name ?? ownerId;
   }, []);
@@ -225,6 +246,7 @@ export function LeadsProvider({
       createLead,
       updateLeadStatus,
       addNote,
+      deleteLead,
       ownerName,
       suggestionsFor,
       addSuggestion: addSuggestionLocal,
@@ -241,6 +263,7 @@ export function LeadsProvider({
       createLead,
       updateLeadStatus,
       addNote,
+      deleteLead,
       ownerName,
       suggestionsFor,
       addSuggestionLocal,

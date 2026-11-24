@@ -8,6 +8,7 @@ import { LeadsProvider, useLeads } from "@/components/LeadsProvider";
 import { SuggestPanel } from "@/components/SuggestPanel";
 import { StatusSelect } from "@/components/StatusSelect";
 import { AddNoteForm } from "@/components/AddNoteForm";
+import { DeleteLeadButton } from "@/components/DeleteLeadButton";
 import { SilentDays } from "@/components/SilentDays";
 import { NoteTime } from "@/components/NoteTime";
 import { markLeadForHighlight } from "@/lib/highlightLead";
@@ -154,6 +155,12 @@ function LeadBody() {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {canEdit(lead) && (
+          <section className="pt-2">
+            <DeleteLeadButton leadId={lead.id} leadName={lead.name} />
           </section>
         )}
       </div>

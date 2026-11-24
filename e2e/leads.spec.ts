@@ -84,3 +84,21 @@ test.describe("leads board", () => {
     await expect(page.getByText("ООО Ромашка")).toBeVisible();
   });
 });
+
+  test("delete lead removes it from the board", async ({ page }) => {
+    await loginAsManager(page);
+
+    await page.getByTestId("new-lead-button").click();
+    await page.getByTestId("new-lead-name").fill("Delete Me");
+    await page.getByTestId("new-lead-contact").fill("delete@test.local");
+    await page.getByTestId("new-lead-form").getByRole("button", { name: "Создать" }).click();
+    await page.getByTestId("column-new").getByText("Delete Me").click();
+
+    await page.getByTestId("delete-lead").click();
+    await expect(page.getByTestId("delete-lead-confirm")).toBeVisible();
+    await page.getByTestId("delete-lead-yes").click();
+
+    await expect(page.getByRole("heading", { name: "Воронка лидов" })).toBeVisible();
+    await expect(page.getByText("Delete Me")).toHaveCount(0);
+  });
+
