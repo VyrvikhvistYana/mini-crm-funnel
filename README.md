@@ -1,8 +1,11 @@
 # Mini CRM Funnel
 
-Портфолио-MVP: **воронка лидов + роли + AI-подсказка следующего шага**.
+MVP: **воронка лидов + роли + AI-подсказка следующего шага**.
 
 Не «чат ради чата», а простой бизнес-процесс: менеджер ведёт лиды по статусам, нейросеть предлагает **что сделать дальше** и черновик сообщения.
+
+**Демо:** https://mini-crm-funnel-mocha.vercel.app  
+**Код:** https://github.com/VyrvikhvistYana/mini-crm-funnel
 
 ## Проблема
 
@@ -10,14 +13,17 @@
 
 ## Что умеет демо
 
-- Роли: **admin** видит всех, **manager** — только своих
+- Роли: **admin** видит и редактирует всех, **manager** — только своих
 - Воронка со **строгими переходами**: `new → contacted → qualified → proposal → won/lost` (нельзя `new → won`)
 - Канбан с **drag-and-drop** (запрещённый переход не применится)
 - Создание / удаление лида, заметки, «дней без касания»
+- Подтверждение сохранения (зелёная галочка) для статуса и заметок
+- Подсветка карточки при создании и при возврате на доску
 - Кнопка **«Что делать дальше?»**:
   - есть `GEMINI_API_KEY` → ответ Gemini
   - нет ключа / API недоступен → запасная эвристика
 - Offline-проверка эвристики: `npm run eval` (10 эталонных кейсов)
+- E2E на Playwright: `npm test`
 
 ## Быстрый старт
 
@@ -51,32 +57,48 @@ GEMINI_MODEL=gemini-3.6-flash
 
 Без ключа демо всё равно работает (эвристика). **Не коммитьте `.env`.**
 
-На Vercel добавьте те же переменные в Project → Settings → Environment Variables.
+На Vercel те же переменные: Project → Settings → Environment Variables.
+
+## E2E (Playwright)
+
+```bash
+npm install
+npx playwright install chromium   # на CI / Linux
+npm test
+```
+
+На macOS 13 Arm, если bundled Chromium не ставится, конфиг использует системный Google Chrome (`channel: "chrome"`).
+
+Покрыто: логин, создание/удаление лида, заметка + toast, смена статуса + подсветка, права manager/admin, AI suggest (мок API).
+
+Workflow `.github/workflows/e2e.yml` лежит локально; на GitHub Actions попадёт после пуша с правом `workflow`.
 
 ## Как устроено
 
 ```
 src/app/          страницы и API
 src/components/   доска, формы, AI-панель
-src/data/         seed (15 лидов) + хранилище в памяти
-src/lib/          типы, права, переходы статусов, AI
+src/data/         seed (15 лидов)
+src/lib/          типы, права, переходы статусов, AI, localStorage
+e2e/              Playwright-тесты
 eval/             эталоны для проверки эвристики
 ```
 
-Стек: Next.js (App Router) + TypeScript + Tailwind. Лиды хранятся в **localStorage браузера** (чтобы демо стабильно работало на Vercel без общей серверной памяти). Логин — cookie-сессия.
+Стек: Next.js (App Router) + TypeScript + Tailwind. Лиды — в **localStorage браузера** (стабильно на Vercel без общей серверной памяти). Логин — cookie-сессия.
 
 ## Ограничения MVP
 
 - Нет настоящей БД и регистрации «как в проде»
 - Нет отправки писем из продукта
 - Нет мультитенантности и интеграций с Bitrix/amocrm
+- Нет экрана управления пользователями у admin
 
 ## Дальше (идеи)
 
-- Postgres вместо памяти
+- Postgres вместо localStorage
 - Нормальный auth (Clerk / NextAuth)
 - Tool calling у агента
-- Деплой + короткий скринкаст
+- Короткий скринкаст демо
 
 ## Лицензия
 
